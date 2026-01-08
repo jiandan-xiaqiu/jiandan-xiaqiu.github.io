@@ -63,19 +63,23 @@
 
 ![Level 3 玩法演示](image/gifs/level3_gameplay.gif)
 
-**技术亮点**：
-- **光学物理模拟**：使用LineRenderer绘制光线路径，Physics.Raycast实现光线追踪，Vector3.Reflect计算镜面反射，自定义算法实现透镜折射
-- **数据驱动设计**：通过读取CSV配置文件实现动态数据加载，Resources系统管理配置资源，UTF-8 BOM处理确保跨平台兼容性
-- **性能优化实践**：对象池技术管理游戏对象，异步场景加载避免阻塞，及时释放未使用资源，减少GC压力
-- **UI系统**：动态UI组件设计，CSV配置驱动，Animator控制UI过渡动画，实时更新关卡状态
-- **音频管理**：双AudioSource设计（背景音乐+音效），支持循环/非循环播放，动态切换音乐
-- **CG播放系统**：VideoPlayer组件集成，CG ID到VideoClip映射，CanvasGroup淡入效果，支持跳过功能
+**剧情实现**：
+![剧情截图](image/story.png)
+- **Csv配置导入**：DialogConfigManager采用RuntimeInitializeOnLoadMethod在场景加载前自动初始化，通过Resources.LoadAll<TextAsset>批量加载Config/Dialogs目录下的CSV配置文件，使用Dictionary<int, TextAsset>建立storyId到配置文件的映射关系。ParseCSV方法实现CSV文本解析，移除UTF-8 BOM头确保跨平台兼容性，通过Split('\n')分割行，Split(',')分割字段，构建headerMap字典实现表头到索引的映射，支持灵活的字段顺序与扩展。DialogData类通过构造函数接收字段数组与headerMap，使用GetFieldSafe方法安全访问字段，避免索引越界异常。
 
-**设计模式应用**：
-- 单例模式（泛型单例基类）
-- 观察者模式（静态事件系统）
-- 策略模式（不同关卡Manager实现不同玩法）
-- 工厂模式（动态创建敌人/物体）
+![程序截图](image/csv_config.png)
+
+- **对话播放系统**：DialogManager采用协程实现对话序列的逐字播放效果，TypeText方法通过WaitForSeconds(0.05f)实现字符间隔显示，支持鼠标点击、空格键、回车键跳过当前对话，WaitUntil等待用户输入触发下一条对话。系统集成背景音乐控制，PlayBGM方法通过Resources.Load加载AudioClip，支持循环播放与动态切换，背景图片与角色立绘通过Resources.Load<Sprite>动态加载，旁白对话自动隐藏角色立绘。MapDialog实现地图触发对话机制，通过GameEvents.OnMapDialogEnter事件触发，ParseDialogConfig解析本地TextAsset配置，实现场景内对话的灵活触发。
+
+![程序截图](image/dialog_system.png)
+
+- **数据存储**：GameProgress类使用Dictionary<int, bool>存储关卡、故事、CG的解锁与完成状态，JsonUtility.ToJson实现序列化，JsonUtility.FromJson实现反序列化，将进度保存到SaveData/savedata.dat文件。SaveProgress方法通过Directory.CreateDirectory确保目录存在，File.WriteAllText写入JSON数据，LoadProgress方法通过File.Exists检查文件存在性，不存在时创建默认存档，初始化第一关解锁状态与前故事解锁状态。ValidateProgress方法确保当前关卡与故事状态一致，自动修复已完成但未解锁的关卡状态，实现数据一致性保障。
+
+
+**设计模式**：
+- **单例模式**：SingletonBase<T>泛型基类提供线程安全的单例实现，使用lock锁确保多线程安全，FindFirstObjectByType查找现有实例，不存在时通过GameObject.AddComponent动态创建，DontDestroyOnLoad实现跨场景持久化。GameManager、LoadingScreen、AudioManager等管理器继承该基类，通过Instance静态属性提供全局唯一访问点，Initialize抽象方法强制子类实现初始化逻辑，OnDestroy生命周期方法清理单例引用，避免内存泄漏。
+
+- **观察者模式**：GameEvents静态类使用C# Action构建事件总线系统，定义OnLevelEnter、OnLevelComplete、OnStoryEnter、OnStoryComplete等事件，通过TriggerLevelEnter、TriggerStoryComplete等方法触发事件，实现关卡、故事、CG、场景切换等模块间的解耦通信。GameManager通过RegisterEventHandlers注册事件监听，HandleLevelEnter、HandleLevelComplete等方法处理事件，OnDestroy时取消订阅，避免内存泄漏，实现发布-订阅模式，支持多个模块同时响应同一事件。
 
 ## 💼 专业技能
 - **编程**: C# (Unity)
