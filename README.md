@@ -25,21 +25,41 @@
 - **场景流程管理**：设计完整的关卡解锁/完成逻辑，支持关卡→故事→CG→关卡选择的流程控制，JSON存档系统实现本地数据持久化
 
 **关卡实现**：
-- **Level 1 - 物体拼图**：实现3D物体拖拽、旋转、深度调整的交互系统，使用协程实现镜头推进、材质渐变、物体消失的并行动画效果
+- **Level 1 - 物体拼图**：
 
 ![游戏截图](image/level1_guidance.jpg)
 
+第一关构建了基于物理射线检测的3D交互系统，通过Physics.Raycast与ScreenPointToRay实现屏幕坐标到世界坐标的精确映射，支持物体拖拽移动、旋转及深度调整三种变换模式，并利用鼠标滚轮与Mathf.Clamp实现物体与相机距离的动态控制。系统设计了对称物体自动同步机制，确保拼图对称性，同时通过Dictionary实时管理物体状态，在物体到达目标位置时触发材质渐变动画。
+
+如图为第一关的交互系统的物体拖拽移动实现逻辑。
+
+![程序截图](image/level1_Movement.png)
+
+通关流程采用协程并行动画系统，通过RunParallelCoroutine包装器实现镜头推进、图片渐显、阴影渐亮三个动画的并行执行与完成计数，利用Color.Lerp实现材质颜色与透明度的平滑过渡，FadeInCoroutine与FadeToAlphaCoroutine分别处理物体达标与通关时的视觉效果。系统集成了音频自动切换机制，通过AudioManager统一管理背景音乐与通关音乐的播放，并在OnDestroy生命周期方法中停止所有协程，确保资源的正确释放与内存管理。
+
 ![Level 1 玩法演示](image/gifs/level1_gameplay.gif)
 
-- **Level 2 - 光学反射**：使用LineRenderer结合Physics.Raycast技术实现光线的发射、反射与折射核心玩法，支持镜面反射和凸透镜折射，最大反射次数限制优化性能
+- **Level 2 - 光学反射**：
 
 ![游戏截图](image/level2_light.png)
 
+第二关构建了基于物理射线追踪的光学模拟系统，通过LineRenderer实时绘制光线路径，利用Physics.Raycast逐帧检测光线与场景物体的碰撞，实现光线的发射、反射与折射计算。系统采用Vector3.Reflect计算镜面反射方向，设计凸透镜折射算法，根据入射方向自动调整法线向量，确保透镜两面透光一致性，并通过maxReflections参数限制最大反射次数，优化性能开销。
+
+![程序截图](image/level2_Optical.png)
+
+光学组件控制采用面向对象设计，BaseMirrorControl作为基类封装镜子的通用功能，支持鼠标拖拽移动与Shift+鼠标旋转两种交互模式，通过Mathf.Clamp限制移动范围，实时更新镜面法线向量。ConvexLensControl继承基类实现透镜折射逻辑，SceneMirrorControl提供独立的场景镜子控制方案。通关判定系统检测光线末端是否命中目标区域且通过凸透镜，满足条件后禁用所有镜子控制并触发Level2_Manager的通关流程，集成Animator播放通关动画与音频切换。
+
 ![Level 2 玩法演示](image/gifs/level2_gameplay.gif)
 
-- **Level 3 - 回合制战斗**：设计敌波次系统和回合制AI逻辑，实现玩家投石机控制与敌人AI行为的回合制战斗机制
+- **Level 3 - 回合制战斗**：
 
 ![游戏截图](image/level3_battle.png)
+
+第三关构建了基于回合制的战斗系统，投石机采用蓄力发射机制，通过Input.GetMouseButton检测鼠标按下与释放事件，使用Mathf.Lerp计算蓄力比例，实现minForce到maxForce的动态发射力控制。投石机臂动画通过Mathf.Lerp实现蓄力时的下沉与释放时的复位，使用armPivot.localEulerAngles控制旋转角度。投射物Stone采用Rigidbody2D.AddForce施加冲量，通过协程实现lifeTime后的自动销毁，OnCollisionEnter检测碰撞并提前销毁，确保回合流程的及时触发。
+
+![程序截图](image/level3_fire.png)
+
+敌人AI系统采用波次管理机制，EnemyManager通过List<GameObject>管理活跃敌人，实现动态生成与销毁，totalEnemies参数控制总敌人数，StartEnemyTurn方法遍历所有敌人调用MoveOneStep实现同步移动。EnemyController维护pathPoints路径点数组，通过currentPointIndex索引实现逐格移动，OnCollisionEnter2D检测与Stone的碰撞触发死亡逻辑，Animator播放死亡动画，Action回调通知EnemyManager移除敌人。回合流程由Level3Manager统一控制，OnPlayerActionComplete与OnEnemyTurnComplete实现玩家与敌人的交替行动，GameWin与GameLose分别检测所有敌人消灭与敌人到达终点，集成AudioManager播放不同场景的音效与背景音乐，GameOverPanel提供胜利与失败后的重置选项。
 
 ![Level 3 玩法演示](image/gifs/level3_gameplay.gif)
 
