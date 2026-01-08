@@ -26,12 +26,22 @@
 
 **关卡实现**：
 - **Level 1 - 物体拼图**：实现3D物体拖拽、旋转、深度调整的交互系统，使用协程实现镜头推进、材质渐变、物体消失的并行动画效果
+
 ![游戏截图](image/level1_guidance.jpg)
-![Level 1 玩法演示](images/gifs/level1_gameplay.gif)
+
+![Level 1 玩法演示](image/gifs/level1_gameplay.gif)
+
 - **Level 2 - 光学反射**：使用LineRenderer结合Physics.Raycast技术实现光线的发射、反射与折射核心玩法，支持镜面反射和凸透镜折射，最大反射次数限制优化性能
+
 ![游戏截图](image/level2_light.png)
+
+![Level 2 玩法演示](image/gifs/level2_gameplay.gif)
+
 - **Level 3 - 回合制战斗**：设计敌波次系统和回合制AI逻辑，实现玩家投石机控制与敌人AI行为的回合制战斗机制
+
 ![游戏截图](image/level3_battle.png)
+
+![Level 3 玩法演示](image/gifs/level3_gameplay.gif)
 
 **技术亮点**：
 - **光学物理模拟**：使用LineRenderer绘制光线路径，Physics.Raycast实现光线追踪，Vector3.Reflect计算镜面反射，自定义算法实现透镜折射
